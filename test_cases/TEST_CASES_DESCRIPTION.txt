@@ -1,0 +1,82 @@
+================================================================
+  TBRGS - Test Cases Description
+================================================================
+
+TC01 - Baseline
+  Covers  : The exact example from the assignment spec. Mixed
+            directed edges, multiple destinations.
+  Expected: BFS/DFS/AS/CUS1/CUS2 -> goal=4, path=2->1->4
+            GBFS                  -> goal=5, path=2->3->5
+
+TC02 - Linear Path
+  Covers  : Single straight-line path, only one route exists.
+  Expected: ALL -> goal=5, path=1->2->3->4->5
+
+TC03 - Origin Is Destination
+  Covers  : Goal is found immediately at the start node.
+  Expected: ALL -> goal=1, nodes=1, path=1
+
+TC04 - Multiple Destinations
+  Covers  : Three destinations exist, verifies each algorithm
+            finds the correct goal based on its strategy.
+  Expected: ALL -> goal=3, path=1->2->3
+
+TC05 - Directed One-Way Edges
+  Covers  : All edges are strictly one-way, no reverse travel.
+  Expected: ALL -> goal=3, path=1->2->3
+
+TC06 - Reverse Direction Blocked
+  Covers  : Edge only goes 2->1, NOT 1->2. Tests that edges
+            are not accidentally treated as bidirectional.
+  Expected: ALL -> No path found.
+
+TC07 - Mixed Directed and Bidirectional Edges
+  Covers  : Some edges go both ways, others are one-way only.
+  Expected: BFS/DFS/AS/CUS1/CUS2 -> goal=5, path=1->2->3->5
+            GBFS                  -> goal=5, path=1->2->4->5
+
+TC08 - No Path (Unreachable Goal)
+  Covers  : Destination exists but has no incoming path from
+            the origin side of the graph.
+  Expected: ALL -> No path found.
+
+TC09 - Disconnected Graph
+  Covers  : Two separate components, origin and destination
+            are in different components.
+  Expected: ALL -> No path found.
+
+TC10 - Tie-Breaking by Node Number
+  Covers  : Equal cost/heuristic neighbours. Smaller node
+            number must be expanded first per the spec rule.
+  Expected: BFS/DFS/CUS1/CUS2 -> goal=5, path=1->2->5
+            GBFS/AS             -> goal=5, path=1->3->5
+
+TC11 - Fewest Hops vs Lowest Cost
+  Covers  : Two paths exist - one with fewer hops, one
+            cheaper. Tests that each algorithm optimises
+            for the right thing.
+  Expected: BFS/CUS2           -> goal=5, path=1->3->5 (hops)
+            DFS                -> goal=5, path=1->2->4->5
+            GBFS/AS/CUS1       -> goal=5, path=1->3->5 (cost)
+
+TC12 - A* vs GBFS Optimality
+  Covers  : A scenario where GBFS could be misled by
+            heuristic. Verifies A* finds the correct path.
+  Expected: ALL -> goal=4, path=1->2->4
+
+TC13 - Cycle in Graph
+  Covers  : A cycle exists (1->2->3->1). Tests that no
+            algorithm gets stuck in an infinite loop.
+  Expected: ALL -> goal=5, path=1->2->4->5
+
+TC14 - Single Node Graph
+  Covers  : Minimal graph with no edges. Origin equals
+            destination.
+  Expected: ALL -> goal=1, nodes=1, path=1
+
+TC15 - Deep Chain
+  Covers  : 10-node straight chain. Tests path reconstruction
+            works correctly for long deep paths.
+  Expected: ALL -> goal=10, path=1->2->3->4->5->6->7->8->9->10
+
+================================================================
