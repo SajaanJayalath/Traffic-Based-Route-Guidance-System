@@ -55,9 +55,9 @@ TC11 - Fewest Hops vs Lowest Cost
   Covers  : Two paths exist - one with fewer hops, one
             cheaper. Tests that each algorithm optimises
             for the right thing.
-  Expected: BFS/CUS2           -> goal=5, path=1->3->5 (hops)
+  Expected: BFS/CUS1           -> goal=5, path=1->3->5 (hops)
             DFS                -> goal=5, path=1->2->4->5
-            GBFS/AS/CUS1       -> goal=5, path=1->3->5 (cost)
+            GBFS/AS/CUS2       -> goal=5, path=1->3->5 (cost)
 
 TC12 - A* vs GBFS Optimality
   Covers  : A scenario where GBFS could be misled by

@@ -59,18 +59,19 @@ Traffic Based Route Guidance System/
 - **Use Case**: Finding lowest-cost routes with good efficiency
 - **Tie-breaking**: Smaller node number has priority
 
-### 5. CUS1 - Uniform Cost Search (Uninformed Custom)
-- **Strategy**: Expands nodes by lowest accumulated path cost
-- **Optimality**: Guaranteed optimal lowest-cost path
-- **Use Case**: Cost-driven optimization without heuristic guidance
-- **Tie-breaking**: Smaller node ID has priority in tie-breaking
-
-### 6. CUS2 - Bidirectional BFS (Informed Custom)
-- **Strategy**: Searches simultaneously from origin and all goal nodes
-- **Optimality**: Fewest hops, like BFS
-- **Efficiency**: More efficient than BFS on larger graphs
-- **Use Case**: Finding shortest path when multiple goals exist
+### 5. CUS1 - Bidirectional BFS (Uninformed Custom)
+- **Strategy**: Searches from the origin and the destination side at the same time
+- **Optimality**: Finds a fewest-hops path, like BFS
+- **Efficiency**: Often expands fewer states than one-direction BFS
+- **Use Case**: Fast hop-based search across larger graphs
 - **Tie-breaking**: Nodes expanded in ascending order
+
+### 6. CUS2 - Bidirectional A* (Informed Custom)
+- **Strategy**: Combines bidirectional search with heuristic guidance from both ends
+- **Heuristic**: Euclidean distance to the nearest goal forward, and to the start backward
+- **Optimality**: Cost-guided heuristic search with deterministic tie-breaking
+- **Use Case**: Heuristic-driven custom search for route planning
+- **Tie-breaking**: Equal-cost paths prefer the lexicographically smaller route
 
 ## Input File Format
 
@@ -142,15 +143,15 @@ python search.py TC13.txt CUS2
 
 ```text
 <filename> <method>
-<goal_node> <nodes_created>
-<path as sequence: node1 -> node2 -> ... -> goalNode>
+<goal_node> <number_of_nodes>
+<path as sequence: node1 node2 ... goalNode>
 ```
 
 **No path exists:**
 
 ```text
 <filename> <method>
-No path found.
+No solution found
 ```
 
 ## Key Implementation Details
@@ -168,8 +169,9 @@ No path found.
 - This keeps behavior deterministic across test cases
 
 ### Node Counting
-- `nodes_created` tracks how many nodes were created or visited during search
-- This is used to compare algorithm efficiency
+- `number_of_nodes` is the count of unique nodes encountered by the search
+- Duplicate occurrences of the same node are not counted again
+- This keeps the reported total aligned with the assignment output format
 
 ## Algorithm Comparison
 
@@ -179,8 +181,8 @@ No path found.
 | DFS | Uninformed | No | No | Fast | Any path |
 | GBFS | Informed | No | Yes | Very fast | Speed over optimality |
 | A* | Informed | By cost | Yes | Fast | Optimal cost routes |
-| CUS1 | Uninformed | By cost | No | Medium | Cost optimization |
-| CUS2 | Informed | By hops | Yes | Very fast | Multiple destinations |
+| CUS1 | Uninformed | By hops | No | Fast | Custom hop-based search |
+| CUS2 | Informed | Heuristic-guided | Yes | Fast | Custom heuristic search |
 
 ## Test Suite Coverage
 

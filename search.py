@@ -84,6 +84,16 @@ def min_heuristic(n, goals, coords):
     return min(heuristic(n, g, coords) for g in goals)
 
 
+def should_update_best_path(current_path, current_cost, candidate_path, candidate_cost):
+    if candidate_path is None:
+        return False
+    if current_path is None or candidate_cost < current_cost:
+        return True
+    if candidate_cost > current_cost:
+        return False
+    return tuple(candidate_path) < tuple(current_path)
+
+
 # -----------------------------
 # BFS
 # -----------------------------
@@ -113,6 +123,7 @@ def bfs(graph, start, goals):
 def dfs(graph, start, goals):
     stack = [Node(start)]
     visited = set()
+    seen_states = {start}
     count = 1
 
     while stack:
@@ -128,34 +139,58 @@ def dfs(graph, start, goals):
 
         for neighbor, cost in sorted(graph[node.state], reverse=True):
             stack.append(Node(neighbor, node))
-            count += 1
+            if neighbor not in seen_states:
+                seen_states.add(neighbor)
+                count += 1
 
     return None, count
 
 
 # -----------------------------
-# UCS (CUS1)
+# BIDIRECTIONAL BFS (CUS1)
 # -----------------------------
-def ucs(graph, start, goals):
-    pq = [(0, Node(start))]
-    visited = {}
+def bidirectional_bfs(graph, start, goals):
+    reverse_graph = {node: [] for node in graph}
+    for source, neighbors in graph.items():
+        for neighbor, cost in neighbors:
+            reverse_graph[neighbor].append((source, cost))
 
-    count = 1
+    if start in goals:
+        return [start], 1
 
-    while pq:
-        cost, node = heapq.heappop(pq)
+    q_start = deque([Node(start)])
+    goal_nodes = {goal: Node(goal) for goal in sorted(goals)}
+    q_goal = deque(goal_nodes[goal] for goal in sorted(goals))
 
-        if node.state in visited and visited[node.state] <= cost:
-            continue
+    visited_start = {start: q_start[0]}
+    visited_goal = goal_nodes.copy()
+    seen_states = set(visited_start) | set(visited_goal)
+    count = len(seen_states)
 
-        visited[node.state] = cost
+    while q_start and q_goal:
+        node_s = q_start.popleft()
+        for neighbor, _ in sorted(graph[node_s.state]):
+            if neighbor not in visited_start:
+                visited_start[neighbor] = Node(neighbor, node_s)
+                q_start.append(visited_start[neighbor])
+                if neighbor not in seen_states:
+                    seen_states.add(neighbor)
+                    count += 1
 
-        if node.state in goals:
-            return node, count
+            if neighbor in visited_goal:
+                return merge_paths(visited_start[neighbor], visited_goal[neighbor]), count
 
-        for neighbor, c in graph[node.state]:
-            heapq.heappush(pq, (cost + c, Node(neighbor, node, cost + c)))
-            count += 1
+        node_g = q_goal.popleft()
+        for neighbor, _ in sorted(reverse_graph[node_g.state]):
+            if neighbor not in visited_goal:
+                visited_goal[neighbor] = Node(neighbor, node_g)
+                q_goal.append(visited_goal[neighbor])
+                if neighbor not in seen_states:
+                    seen_states.add(neighbor)
+                    count += 1
+
+            if neighbor in visited_start:
+                return merge_paths(visited_start[neighbor], visited_goal[neighbor]), count
 
     return None, count
 
@@ -166,6 +201,7 @@ def ucs(graph, start, goals):
 def gbfs(graph, start, goals, coords):
     pq = [(min_heuristic(start, goals, coords), Node(start))]
     visited = set()
+    seen_states = {start}
     count = 1
 
     while pq:
@@ -182,7 +218,9 @@ def gbfs(graph, start, goals, coords):
         for neighbor, _ in graph[node.state]:
             h = min_heuristic(neighbor, goals, coords)
             heapq.heappush(pq, (h, Node(neighbor, node)))
-            count += 1
+            if neighbor not in seen_states:
+                seen_states.add(neighbor)
+                count += 1
 
     return None, count
 
@@ -193,6 +231,7 @@ def gbfs(graph, start, goals, coords):
 def astar(graph, start, goals, coords):
     pq = [(0, Node(start, cost=0))]
     visited = {}
+    seen_states = {start}
 
     count = 1
 
@@ -211,49 +250,119 @@ def astar(graph, start, goals, coords):
             g = node.cost + c
             h = min_heuristic(neighbor, goals, coords)
             heapq.heappush(pq, (g + h, Node(neighbor, node, g)))
-            count += 1
+            if neighbor not in seen_states:
+                seen_states.add(neighbor)
+                count += 1
 
     return None, count
 
 
 # -----------------------------
-# BIDIRECTIONAL BFS (CUS2)
+# BIDIRECTIONAL A* (CUS2)
 # -----------------------------
-def bidirectional_bfs(graph, start, goals):
-    for goal in goals:
-        q_start = deque([Node(start)])
-        q_goal = deque([Node(goal)])
+def bidirectional_astar(graph, start, goals, coords):
+    reverse_graph = {node: [] for node in graph}
+    for source, neighbors in graph.items():
+        for neighbor, cost in neighbors:
+            reverse_graph[neighbor].append((source, cost))
 
-        visited_start = {start: Node(start)}
-        visited_goal = {goal: Node(goal)}
+    if start in goals:
+        return [start], 1
 
-        count = 2
+    start_node = Node(start, cost=0)
+    goal_nodes = {goal: Node(goal, cost=0) for goal in sorted(goals)}
 
-        while q_start and q_goal:
+    pq_start = [(min_heuristic(start, goals, coords), start_node)]
+    pq_goal = [(heuristic(goal, start, coords), goal_nodes[goal]) for goal in sorted(goals)]
+    heapq.heapify(pq_goal)
 
-            # Forward
-            node_s = q_start.popleft()
-            for neighbor, _ in graph[node_s.state]:
-                if neighbor not in visited_start:
-                    visited_start[neighbor] = Node(neighbor, node_s)
-                    q_start.append(visited_start[neighbor])
-                    count += 1
+    best_start = {start: 0}
+    best_goal = {goal: 0 for goal in goals}
+    nodes_start = {start: start_node}
+    nodes_goal = goal_nodes.copy()
 
-                    if neighbor in visited_goal:
-                        return merge_paths(visited_start[neighbor], visited_goal[neighbor]), count
+    closed_start = {}
+    closed_goal = {}
+    best_path_cost = math.inf
+    best_path = None
 
-            # Backward
-            node_g = q_goal.popleft()
-            for neighbor, _ in graph[node_g.state]:
-                if neighbor not in visited_goal:
-                    visited_goal[neighbor] = Node(neighbor, node_g)
-                    q_goal.append(visited_goal[neighbor])
-                    count += 1
+    seen_states = set(nodes_start) | set(nodes_goal)
+    count = len(seen_states)
 
-                    if neighbor in visited_start:
-                        return merge_paths(visited_start[neighbor], visited_goal[neighbor]), count
+    while pq_start and pq_goal:
+        if pq_start[0][0] <= pq_goal[0][0]:
+            _, node_s = heapq.heappop(pq_start)
+            if node_s.cost > best_start.get(node_s.state, math.inf):
+                continue
+            if node_s.state in closed_start and closed_start[node_s.state] <= node_s.cost:
+                continue
+            closed_start[node_s.state] = node_s.cost
 
-    return None, count
+            if node_s.state in best_goal:
+                total_cost = node_s.cost + best_goal[node_s.state]
+                candidate_path = merge_paths(node_s, nodes_goal[node_s.state])
+                if should_update_best_path(best_path, best_path_cost, candidate_path, total_cost):
+                    best_path_cost = total_cost
+                    best_path = candidate_path
+
+            for neighbor, edge_cost in sorted(graph[node_s.state]):
+                g = node_s.cost + edge_cost
+                if g < best_start.get(neighbor, math.inf):
+                    next_node = Node(neighbor, node_s, g)
+                    best_start[neighbor] = g
+                    nodes_start[neighbor] = next_node
+                    f = g + min_heuristic(neighbor, goals, coords)
+                    heapq.heappush(pq_start, (f, next_node))
+                    if neighbor not in seen_states:
+                        seen_states.add(neighbor)
+                        count += 1
+
+                if neighbor in best_goal:
+                    total_cost = g + best_goal[neighbor]
+                    candidate_path = merge_paths(nodes_start[neighbor], nodes_goal[neighbor])
+                    if should_update_best_path(best_path, best_path_cost, candidate_path, total_cost):
+                        best_path_cost = total_cost
+                        best_path = candidate_path
+        else:
+            _, node_g = heapq.heappop(pq_goal)
+            if node_g.cost > best_goal.get(node_g.state, math.inf):
+                continue
+            if node_g.state in closed_goal and closed_goal[node_g.state] <= node_g.cost:
+                continue
+            closed_goal[node_g.state] = node_g.cost
+
+            if node_g.state in best_start:
+                total_cost = node_g.cost + best_start[node_g.state]
+                candidate_path = merge_paths(nodes_start[node_g.state], node_g)
+                if should_update_best_path(best_path, best_path_cost, candidate_path, total_cost):
+                    best_path_cost = total_cost
+                    best_path = candidate_path
+
+            for neighbor, edge_cost in sorted(reverse_graph[node_g.state]):
+                g = node_g.cost + edge_cost
+                if g < best_goal.get(neighbor, math.inf):
+                    next_node = Node(neighbor, node_g, g)
+                    best_goal[neighbor] = g
+                    nodes_goal[neighbor] = next_node
+                    f = g + heuristic(neighbor, start, coords)
+                    heapq.heappush(pq_goal, (f, next_node))
+                    if neighbor not in seen_states:
+                        seen_states.add(neighbor)
+                        count += 1
+
+                if neighbor in best_start:
+                    total_cost = g + best_start[neighbor]
+                    candidate_path = merge_paths(nodes_start[neighbor], nodes_goal[neighbor])
+                    if should_update_best_path(best_path, best_path_cost, candidate_path, total_cost):
+                        best_path_cost = total_cost
+                        best_path = candidate_path
+
+        min_forward = pq_start[0][0] if pq_start else math.inf
+        min_backward = pq_goal[0][0] if pq_goal else math.inf
+        if best_path is not None and min(min_forward, min_backward) > best_path_cost:
+            return best_path, count
+
+    return best_path, count
 
 
 def merge_paths(node1, node2):
@@ -284,9 +393,9 @@ def main():
     elif method == "AS":
         result, count = astar(graph, start, goals, coords)
     elif method == "CUS1":
-        result, count = ucs(graph, start, goals)
-    elif method == "CUS2":
         result, count = bidirectional_bfs(graph, start, goals)
+    elif method == "CUS2":
+        result, count = bidirectional_astar(graph, start, goals, coords)
     else:
         print("Invalid method")
         return
