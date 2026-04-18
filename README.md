@@ -1,81 +1,76 @@
 # Traffic-Based Route Guidance System (TBRGS)
 
-A comprehensive implementation of multiple pathfinding algorithms for route guidance, designed as part of the Swinburne University Introduction to AI course.
+A Python implementation of multiple search algorithms for route guidance, developed for the Swinburne University Introduction to AI course.
 
 ## Overview
 
-This project implements six different search algorithms to find optimal routes in a weighted, directed graph representing a traffic network. The system evaluates routes based on different optimization criteria: path cost, number of hops, or heuristic-based guidance.
+This project solves route-finding problems on a weighted, directed graph that represents a traffic network. It supports six search methods and includes both:
+
+- a command-line interface for assignment-style runs
+- a Tkinter GUI for research/demo visualisation
+
+Different algorithms optimise for different criteria such as hop count, traversal order, or heuristic/cost guidance.
 
 ## Project Structure
 
 ```text
 Traffic Based Route Guidance System/
-├── search.py
-├── README.md
-├── PathFinder-test.txt
-├── TC01.txt
-├── TC02.txt
-├── TC03.txt
-├── TC04.txt
-├── TC05.txt
-├── TC06.txt
-├── TC07.txt
-├── TC08.txt
-├── TC09.txt
-├── TC10.txt
-├── TC11.txt
-├── TC12.txt
-├── TC13.txt
-├── TC14.txt
-├── TC15.txt
-└── TEST_CASES_DESCRIPTION.txt
+|-- search.py
+|-- gui.py
+|-- README.md
+|-- PathFinder-test.txt
+|-- TC01.txt
+|-- TC02.txt
+|-- TC03.txt
+|-- TC04.txt
+|-- TC05.txt
+|-- TC06.txt
+|-- TC07.txt
+|-- TC08.txt
+|-- TC09.txt
+|-- TC10.txt
+|-- TC11.txt
+|-- TC12.txt
+|-- TC13.txt
+|-- TC14.txt
+`-- TEST_CASES_DESCRIPTION.txt
 ```
 
 ## Implemented Algorithms
 
-### 1. BFS - Breadth-First Search (Uninformed)
-- **Strategy**: Explores level by level using a FIFO queue
-- **Optimality**: Fewest hops (tree depth), not necessarily lowest cost
-- **Use Case**: Finding shortest path by number of moves
-- **Tie-breaking**: Expands smaller node IDs first
+### 1. BFS - Breadth-First Search
+- Strategy: explores level by level using a FIFO queue
+- Uses cost during search: no
+- Best for: fewest-hop solutions
 
-### 2. DFS - Depth-First Search (Uninformed)
-- **Strategy**: Explores as deep as possible before backtracking using a LIFO stack
-- **Optimality**: No guarantee of optimal path
-- **Use Case**: Finding any path quickly; memory-efficient
-- **Tie-breaking**: Pushes nodes in descending order for correct expansion order
+### 2. DFS - Depth-First Search
+- Strategy: explores as deep as possible before backtracking using a LIFO stack
+- Uses cost during search: no
+- Best for: finding any path quickly with simple memory usage
 
-### 3. GBFS - Greedy Best-First Search (Informed)
-- **Strategy**: Always expands the node closest to goal via heuristic function
-- **Heuristic**: Euclidean distance to nearest goal
-- **Optimality**: Fast but not guaranteed optimal
-- **Use Case**: Quick approximations when optimality is not critical
-- **Tie-breaking**: Smaller node number has priority
+### 3. GBFS - Greedy Best-First Search
+- Strategy: expands the node with the best heuristic estimate to a goal
+- Uses cost during search: heuristic only
+- Best for: fast goal-directed search when strict optimality is not required
 
-### 4. A* - A Star Search (Informed)
-- **Strategy**: Combines actual cost `g(n)` and heuristic `h(n)`; expands `f(n) = g(n) + h(n)`
-- **Heuristic**: Euclidean distance to nearest goal
-- **Optimality**: Guaranteed optimal lowest-cost path
-- **Use Case**: Finding lowest-cost routes with good efficiency
-- **Tie-breaking**: Smaller node number has priority
+### 4. AS - A* Search
+- Strategy: expands using `f(n) = g(n) + h(n)`
+- Uses cost during search: yes
+- Best for: lowest-cost routes with heuristic guidance
 
-### 5. CUS1 - Bidirectional BFS (Uninformed Custom)
-- **Strategy**: Searches from the origin and the destination side at the same time
-- **Optimality**: Finds a fewest-hops path, like BFS
-- **Efficiency**: Often expands fewer states than one-direction BFS
-- **Use Case**: Fast hop-based search across larger graphs
-- **Tie-breaking**: Nodes expanded in ascending order
+### 5. CUS1 - Bidirectional BFS
+- Strategy: runs hop-based search from both ends
+- Uses cost during search: no
+- Best for: fewest-hop bidirectional search
 
-### 6. CUS2 - Bidirectional A* (Informed Custom)
-- **Strategy**: Combines bidirectional search with heuristic guidance from both ends
-- **Heuristic**: Euclidean distance to the nearest goal forward, and to the start backward
-- **Optimality**: Cost-guided heuristic search with deterministic tie-breaking
-- **Use Case**: Heuristic-driven custom search for route planning
-- **Tie-breaking**: Equal-cost paths prefer the lexicographically smaller route
+### 6. CUS2 - Bidirectional A*
+- Strategy: combines bidirectional expansion with heuristic guidance
+- Uses cost during search: yes
+- Best for: custom heuristic route planning
 
 ## Input File Format
 
-Test case files follow this structure:
+Each test case file uses this format:
 
 ```text
 Nodes:
@@ -93,7 +88,7 @@ Destinations:
 <goal_1>; <goal_2>; ...
 ```
 
-### Example (`TC01.txt`)
+Example:
 
 ```text
 Nodes:
@@ -119,17 +114,20 @@ Destinations:
 
 ## Usage
 
-### Running the Search
+### Command Line
+
+Run a search with:
 
 ```bash
 python search.py <test_file> <method>
 ```
 
-**Parameters:**
-- `<test_file>`: Path to a test case file in the repository root, for example `TC01.txt`
-- `<method>`: Search algorithm to use: `BFS`, `DFS`, `GBFS`, `AS`, `CUS1`, or `CUS2`
+Parameters:
 
-### Examples
+- `<test_file>`: a test case file such as `TC01.txt`
+- `<method>`: `BFS`, `DFS`, `GBFS`, `AS`, `CUS1`, or `CUS2`
+
+Examples:
 
 ```bash
 python search.py TC01.txt BFS
@@ -137,89 +135,106 @@ python search.py TC11.txt AS
 python search.py TC13.txt CUS2
 ```
 
-### Output Format
+Command-line output format:
 
-**Successful path found:**
+Successful path:
 
 ```text
 <filename> <method>
 <goal_node> <number_of_nodes>
-<path as sequence: node1 node2 ... goalNode>
+<node1> -> <node2> -> ... -> <goal_node>
 ```
 
-**No path exists:**
+No path:
 
 ```text
 <filename> <method>
 No solution found
 ```
 
+### GUI
+
+Launch the research GUI with:
+
+```bash
+python gui.py
+```
+
+GUI behaviour:
+
+- starts blank with no graph displayed
+- requires the user to select both a test case and an algorithm
+- only updates after the user presses `Run Search`
+- does not automatically rerun when selections change
+- uses the input `(x, y)` coordinates to draw a Cartesian-style graph
+- renders opposite directions separately when both edges exist between two nodes
+- highlights the final route and displays the chosen goal, explored-node count, and path
+
+Cost display in the GUI:
+
+- `BFS`, `DFS`, and `CUS1` hide edge-cost labels because they do not use cost during search
+- `GBFS`, `AS`, and `CUS2` show edge-cost labels
+
 ## Key Implementation Details
 
-### Heuristic Function
-- **Function**: Euclidean straight-line distance from a node to the nearest goal
-- **Admissibility**: Never overestimates actual cost for A* and GBFS
+### Heuristic
+- Euclidean straight-line distance to the nearest goal
+- Used by `GBFS`, `AS`, and `CUS2`
 
 ### Path Reconstruction
-- Tracks each visited node's parent
-- Rebuilds the path from goal back to origin
+- Each node stores its parent
+- The final path is rebuilt from the goal back to the origin
 
-### Tie-Breaking Rule
-- When nodes have equal priority, smaller node IDs are expanded first
-- This keeps behavior deterministic across test cases
+### Cost Handling
+- `BFS`, `DFS`, and `CUS1` ignore edge cost when choosing which node to expand
+- `GBFS`, `AS`, and `CUS2` use heuristic and/or cost information during search
+- The project can still compute and report the final path cost after a path is found
+
+### Tie-Breaking
+- When priorities are equal, smaller node IDs are preferred
+- This keeps results deterministic across test cases
 
 ### Node Counting
 - `number_of_nodes` is the count of unique nodes encountered by the search
-- Duplicate occurrences of the same node are not counted again
-- This keeps the reported total aligned with the assignment output format
-
-## Algorithm Comparison
-
-| Algorithm | Type | Optimal | Heuristic | Speed | Best For |
-|---|---|---|---|---|---|
-| BFS | Uninformed | By hops | No | Medium | Fewest moves |
-| DFS | Uninformed | No | No | Fast | Any path |
-| GBFS | Informed | No | Yes | Very fast | Speed over optimality |
-| A* | Informed | By cost | Yes | Fast | Optimal cost routes |
-| CUS1 | Uninformed | By hops | No | Fast | Custom hop-based search |
-| CUS2 | Informed | Heuristic-guided | Yes | Fast | Custom heuristic search |
+- Duplicate encounters are not counted again
 
 ## Test Suite Coverage
 
-The project includes 15 test cases covering:
+The repository includes 15 test cases covering:
 
-- Baseline mixed-edge graph
-- Single linear paths
-- Origin-destination identity
-- Multiple destination handling
-- Directed one-way edges
-- Blocked reverse paths
-- Mixed directed and bidirectional edges
-- Unreachable destinations
-- Disconnected graph components
-- Tie-breaking by node number
-- Cost vs. hop optimization
-- A* vs GBFS optimality comparison
-- Cyclic graphs
-- Single-node graphs
-- Deep chain path reconstruction
+- baseline mixed-edge graphs
+- single linear paths
+- origin equals destination
+- multiple destinations
+- one-way directed edges
+- blocked reverse paths
+- mixed directed and bidirectional edges
+- unreachable destinations
+- disconnected graph components
+- tie-breaking by node number
+- DFS traversal-order contrast
+- A* vs GBFS comparison
+- cyclic graphs
+- single-node graphs
+- deep-chain path reconstruction
 
-See [TEST_CASES_DESCRIPTION.txt](TEST_CASES_DESCRIPTION.txt) for detailed expectations.
+See [TEST_CASES_DESCRIPTION.txt](TEST_CASES_DESCRIPTION.txt) for detailed expected results.
 
 ## Requirements
 
 - Python 3.6+
-- Standard library only
+- standard library only
+- Tkinter available in the local Python installation for the GUI
 
 ## Development Context
 
-This project was developed for the Introduction to AI course at Swinburne University and demonstrates:
+This project demonstrates:
 
-- Core search algorithm implementation
-- Uninformed vs informed search strategies
-- Heuristic design
-- Graph representation and traversal
-- Performance comparison across algorithms
+- graph parsing
+- uninformed and informed search
+- heuristic design
+- deterministic tie-breaking
+- route visualisation on coordinate-based graphs
 
 ## Author
 

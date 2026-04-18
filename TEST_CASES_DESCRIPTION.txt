@@ -5,8 +5,9 @@
 TC01 - Baseline
   Covers  : The exact example from the assignment spec. Mixed
             directed edges, multiple destinations.
-  Expected: BFS/DFS/AS/CUS1/CUS2 -> goal=4, path=2->1->4
-            GBFS                  -> goal=5, path=2->3->5
+  Expected: BFS/AS/CUS1/CUS2 -> goal=4, path=2->1->4
+            DFS              -> goal=5, path=2->1->3->5
+            GBFS             -> goal=5, path=2->3->5
 
 TC02 - Linear Path
   Covers  : Single straight-line path, only one route exists.
@@ -51,13 +52,13 @@ TC10 - Tie-Breaking by Node Number
   Expected: BFS/DFS/CUS1/CUS2 -> goal=5, path=1->2->5
             GBFS/AS             -> goal=5, path=1->3->5
 
-TC11 - Fewest Hops vs Lowest Cost
-  Covers  : Two paths exist - one with fewer hops, one
-            cheaper. Tests that each algorithm optimises
-            for the right thing.
-  Expected: BFS/CUS1           -> goal=5, path=1->3->5 (hops)
+TC11 - DFS Traversal Order vs Direct Route
+  Covers  : Multiple routes exist. DFS follows the deeper
+            branch based on traversal order, while BFS and
+            cost-guided methods select the more direct path.
+  Expected: BFS/CUS1           -> goal=5, path=1->3->5
             DFS                -> goal=5, path=1->2->4->5
-            GBFS/AS/CUS2       -> goal=5, path=1->3->5 (cost)
+            GBFS/AS/CUS2       -> goal=5, path=1->3->5
 
 TC12 - A* vs GBFS Optimality
   Covers  : A scenario where GBFS could be misled by

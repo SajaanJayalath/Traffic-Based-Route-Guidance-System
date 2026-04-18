@@ -371,17 +371,24 @@ def merge_paths(node1, node2):
     return path1 + path2[::-1][1:]
 
 
-# -----------------------------
-# MAIN
-# -----------------------------
-def main():
-    if len(sys.argv) != 3:
-        print("Usage: python search.py <filename> <method>")
-        return
+def compute_path_cost(graph, path):
+    if not path or len(path) == 1:
+        return 0
 
-    filename = sys.argv[1]
-    method = sys.argv[2].upper()
+    total = 0
+    for current, nxt in zip(path, path[1:]):
+        for neighbor, cost in graph[current]:
+            if neighbor == nxt:
+                total += cost
+                break
+        else:
+            raise ValueError(f"Invalid path segment: {current} -> {nxt}")
 
+    return total
+
+
+def run_search(filename, method):
+    method = method.upper()
     coords, graph, start, goals = parse_file(filename)
 
     if method == "BFS":
@@ -397,15 +404,61 @@ def main():
     elif method == "CUS2":
         result, count = bidirectional_astar(graph, start, goals, coords)
     else:
+        raise ValueError("Invalid method")
+
+    if not result:
+        return {
+            "filename": filename,
+            "method": method,
+            "coords": coords,
+            "graph": graph,
+            "origin": start,
+            "goals": goals,
+            "found": False,
+            "goal": None,
+            "count": count,
+            "path": None,
+            "path_cost": None,
+        }
+
+    path = reconstruct_path(result) if isinstance(result, Node) else result
+    return {
+        "filename": filename,
+        "method": method,
+        "coords": coords,
+        "graph": graph,
+        "origin": start,
+        "goals": goals,
+        "found": True,
+        "goal": path[-1],
+        "count": count,
+        "path": path,
+        "path_cost": compute_path_cost(graph, path),
+    }
+
+
+# -----------------------------
+# MAIN
+# -----------------------------
+def main():
+    if len(sys.argv) != 3:
+        print("Usage: python search.py <filename> <method>")
+        return
+
+    filename = sys.argv[1]
+    method = sys.argv[2].upper()
+
+    try:
+        outcome = run_search(filename, method)
+    except ValueError:
         print("Invalid method")
         return
 
     print(f"{filename} {method}")
 
-    if result:
-        path = reconstruct_path(result) if isinstance(result, Node) else result
-        print(f"{path[-1]} {count}")
-        print(" ".join(map(str, path)))
+    if outcome["found"]:
+        print(f"{outcome['goal']} {outcome['count']}")
+        print(" -> ".join(map(str, outcome["path"])))
     else:
         print("No solution found")
 
